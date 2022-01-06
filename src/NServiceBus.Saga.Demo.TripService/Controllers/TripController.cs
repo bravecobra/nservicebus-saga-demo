@@ -49,11 +49,11 @@ public class TripController : ControllerBase
         };
         var trip = await _messageSession.Request<TripState>(request);
 
-        if (trip != null)
+        if (trip.TripId != Guid.Empty)
         {
             return Ok(trip);
         }
-        return NotFound(id);
+        return NotFound(new TripNotFound(){ TripId = id});
     }
 
     [HttpDelete("{id}")]

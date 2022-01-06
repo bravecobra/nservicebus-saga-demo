@@ -3,6 +3,7 @@ using NServiceBus.Saga.Demo.Contracts.Flights;
 using NServiceBus.Saga.Demo.Contracts.Hotels;
 using NServiceBus.Saga.Demo.Contracts.Trips;
 using NServiceBus.Saga.Demo.TripService.Domain;
+using NServiceBus.Sagas;
 
 namespace NServiceBus.Saga.Demo.TripService.Application;
 
@@ -11,8 +12,8 @@ public class TripPolicy: Saga<Trip>,
         IHandleMessages<FlightBooked>,
         IHandleMessages<HotelBooked>,
         IHandleMessages<TripStateRequest>,
-        IHandleMessages<TripCancellationRequest>
-    //, IHandleSagaNotFound
+        IHandleMessages<TripCancellationRequest>,
+        IHandleSagaNotFound
 {
     private readonly ILogger<TripPolicy> _logger;
 
@@ -117,7 +118,8 @@ public class TripPolicy: Saga<Trip>,
     {
         if (message is TripStateRequest request)
         {
-            await context.Publish(new TripNotFound { TripId = request.TripId });
+            await context.Reply(new TripState());
+            //await context.Reply(new TripNotFound { TripId = request.TripId });
         }
         else
         {
