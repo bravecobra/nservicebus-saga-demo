@@ -1,0 +1,15 @@
+version: "3"
+services:
+  rabbitmq:
+    container_name: rabbitmq
+    hostname: rabbit
+    image: rabbitmq:3-management
+    networks:
+      nservicebus: null
+    ports:
+     - "5672:5672"
+     - "15672:15672"
+
+networks:
+  nservicebus:
+    driver: bridge
