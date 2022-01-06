@@ -7,9 +7,13 @@ EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY ["NServiceBus.Saga.Demo.TransportationService/NServiceBus.Saga.Demo.TransportationService.csproj", "NServiceBus.Saga.Demo.TransportationService/"]
+COPY ["src/NServiceBus.Saga.Demo.TransportationService/NServiceBus.Saga.Demo.TransportationService.csproj", "NServiceBus.Saga.Demo.TransportationService/"]
+COPY ["src/NServiceBus.Saga.Demo.Contracts/NServiceBus.Saga.Demo.Contracts.csproj", "NServiceBus.Saga.Demo.Contracts/"]
+COPY ["src/NServiceBus.Common/NServiceBus.Common.csproj", "NServiceBus.Common/"]
 RUN dotnet restore "NServiceBus.Saga.Demo.TransportationService/NServiceBus.Saga.Demo.TransportationService.csproj"
-COPY . .
+COPY ./src/NServiceBus.Saga.Demo.TransportationService/ ./NServiceBus.Saga.Demo.TransportationService/
+COPY ./src/NServiceBus.Saga.Demo.Contracts/ ./NServiceBus.Saga.Demo.Contracts/
+COPY ./src/NServiceBus.Common/ ./NServiceBus.Common/
 WORKDIR "/src/NServiceBus.Saga.Demo.TransportationService"
 RUN dotnet build "NServiceBus.Saga.Demo.TransportationService.csproj" -c Release -o /app/build
 
