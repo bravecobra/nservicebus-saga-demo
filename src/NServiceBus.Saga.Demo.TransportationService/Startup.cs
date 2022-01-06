@@ -1,9 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
-#pragma warning disable CS0435 // Namespace conflicts with imported type
 using NServiceBus.Saga.Demo.TransportationService.Configuration.Services;
-#pragma warning restore CS0435 // Namespace conflicts with imported type
 
 namespace NServiceBus.Saga.Demo.TransportationService;
 

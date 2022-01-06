@@ -1,5 +1,4 @@
-﻿// ReSharper disable InconsistentNaming
-namespace NServiceBus.Saga.Demo.Contracts.Trips;
+﻿namespace NServiceBus.Saga.Demo.Contracts.Trips;
 
 public class TripSubmissionResponse: IMessage
 {

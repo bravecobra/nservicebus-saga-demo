@@ -1,8 +1,5 @@
-#pragma warning disable CS0435 // Namespace conflicts with imported type
 using NServiceBus.Saga.Demo.TransportationService.Configuration.Services;
 using Serilog;
-
-#pragma warning restore CS0435 // Namespace conflicts with imported type
 
 namespace NServiceBus.Saga.Demo.TransportationService;
 

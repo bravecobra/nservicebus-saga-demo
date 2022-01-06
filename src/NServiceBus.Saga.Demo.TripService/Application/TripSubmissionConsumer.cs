@@ -27,13 +27,14 @@ public class TripSubmissionConsumer: IHandleMessages<SubmitTrip>
 
         await context.Send(new TripRegistrationRequest
         {
+            
             TripId = message.TripId,
             RequiredStars = message.RequiredStars,
             Destination = message.Destination,
             Start = message.Start,
             End = message.End
         });
-        _logger.LogInformation($"TripRequest for {message.Destination} accepted");
+        _logger.LogInformation($"TripId: {message.TripId}: TripRequest for {message.Destination} accepted");
         await context.Reply(new TripSubmissionResponse {Succeeded = true});
     }
 }

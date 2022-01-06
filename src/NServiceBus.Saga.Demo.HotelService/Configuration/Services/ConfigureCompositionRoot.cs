@@ -1,22 +1,21 @@
-﻿namespace NServiceBus.Saga.Demo.HotelService.Configuration.Services
+﻿namespace NServiceBus.Saga.Demo.HotelService.Configuration.Services;
+
+/// <summary>
+/// 
+/// </summary>
+public static class ConfigureCompositionRoot
 {
     /// <summary>
     /// 
     /// </summary>
-    public static class ConfigureCompositionRoot
+    /// <param name="services"></param>
+    /// <returns></returns>
+    public static IServiceCollection AddCompositionRoot(this IServiceCollection services)
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="services"></param>
-        /// <returns></returns>
-        public static IServiceCollection AddCompositionRoot(this IServiceCollection services)
-        {
-            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-            services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
-            services.AddOptions();
+        services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+        services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
+        services.AddOptions();
 
-            return services;
-        }
+        return services;
     }
 }

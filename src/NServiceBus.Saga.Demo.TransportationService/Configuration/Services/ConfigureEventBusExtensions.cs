@@ -1,79 +1,67 @@
-﻿using NServiceBus.Common;
-using NServiceBus.Saga.Demo.Contracts.Flights;
+﻿using NServiceBus.Saga.Demo.Contracts.Flights;
 
-namespace NServiceBus.Saga.Demo.TransportationService.Configuration.Services
+namespace NServiceBus.Saga.Demo.TransportationService.Configuration.Services;
+
+public static class ConfigureEventBusExtensions
 {
-    public static class ConfigureEventBusExtensions
+    public static IHostBuilder UseCustomEventBus(this IHostBuilder builder)
     {
-        public static IHostBuilder UseCustomEventBus(this IHostBuilder builder)
+        builder.UseNServiceBus(context =>
         {
-            builder.UseNServiceBus(context =>
-            {
-                var endpointConfiguration = new EndpointConfiguration("BookFlight");
+            var endpointConfiguration = new EndpointConfiguration("BookFlight");
 
-                var transport = endpointConfiguration.UseTransport<RabbitMQTransport>()
-                    .ConnectionString("amqp://localhost")
-                    .UseConventionalRoutingTopology();
-                endpointConfiguration.UsePersistence<InMemoryPersistence>();
-                endpointConfiguration.EnableInstallers();
-                endpointConfiguration.EnableCallbacks();
-                endpointConfiguration.EnableOutbox();
-                endpointConfiguration.MakeInstanceUniquelyAddressable(Environment.MachineName);
-                endpointConfiguration.UseSerialization<NewtonsoftSerializer>();
-                endpointConfiguration.SendFailedMessagesTo(errorQueue: "error");
-                endpointConfiguration.AuditProcessedMessagesTo("audit");
+            var transport = endpointConfiguration.UseTransport<RabbitMQTransport>()
+                .ConnectionString("amqp://localhost")
+                .UseConventionalRoutingTopology();
+            endpointConfiguration.UsePersistence<InMemoryPersistence>();
+            endpointConfiguration.EnableInstallers();
+            endpointConfiguration.EnableCallbacks();
+            endpointConfiguration.EnableOutbox();
+            endpointConfiguration.MakeInstanceUniquelyAddressable(Environment.MachineName);
+            endpointConfiguration.UseSerialization<NewtonsoftSerializer>();
+            endpointConfiguration.SendFailedMessagesTo(errorQueue: "error");
+            endpointConfiguration.AuditProcessedMessagesTo("audit");
 
-                var metrics = endpointConfiguration.EnableMetrics();
+            var metrics = endpointConfiguration.EnableMetrics();
 
-                metrics.SendMetricDataToServiceControl(
-                    serviceControlMetricsAddress: "Particular.Monitoring",
-                    interval: TimeSpan.FromSeconds(2)
-                );
+            metrics.SendMetricDataToServiceControl(
+                serviceControlMetricsAddress: "Particular.Monitoring",
+                interval: TimeSpan.FromSeconds(2)
+            );
 
-                var servicePlatformConnection = ServicePlatformConnectionConfiguration.Parse(@"{
-    ""Heartbeats"": {
-        ""Enabled"": true,
-        ""HeartbeatsQueue"": ""Particular.Myservicecontrol"",
-        ""Frequency"": ""00:00:10"",
-        ""TimeToLive"": ""00:00:40""
-    },
-    ""MessageAudit"": {
-        ""Enabled"": true,
-        ""AuditQueue"": ""audit""
-    },
-    ""CustomChecks"": {
-        ""Enabled"": true,
-        ""CustomChecksQueue"": ""Particular.Myservicecontrol""
-    },
-    ""ErrorQueue"": ""error"",
-    ""SagaAudit"": {
-        ""Enabled"": true,
-        ""SagaAuditQueue"": ""audit""
-    },
-    ""Metrics"": {
-        ""Enabled"": true,
-        ""MetricsQueue"": ""Particular.Monitoring"",
-        ""Interval"": ""00:00:01""
-    }
-}");
+            var servicePlatformConnection = ServicePlatformConnectionConfiguration.Parse(@"{
+                ""Heartbeats"": {
+                    ""Enabled"": true,
+                    ""HeartbeatsQueue"": ""Particular.Myservicecontrol"",
+                    ""Frequency"": ""00:00:10"",
+                    ""TimeToLive"": ""00:00:40""
+                },
+                ""MessageAudit"": {
+                    ""Enabled"": true,
+                    ""AuditQueue"": ""audit""
+                },
+                ""CustomChecks"": {
+                    ""Enabled"": true,
+                    ""CustomChecksQueue"": ""Particular.Myservicecontrol""
+                },
+                ""ErrorQueue"": ""error"",
+                ""SagaAudit"": {
+                    ""Enabled"": true,
+                    ""SagaAuditQueue"": ""audit""
+                },
+                ""Metrics"": {
+                    ""Enabled"": true,
+                    ""MetricsQueue"": ""Particular.Monitoring"",
+                    ""Interval"": ""00:00:01""
+                }
+            }");
 
-                endpointConfiguration.ConnectToServicePlatform(servicePlatformConnection);
+            endpointConfiguration.ConnectToServicePlatform(servicePlatformConnection);
 
-                var routing = transport.Routing();
-                routing.RouteToEndpoint(typeof(FlightBooked), "TripService");
-                return endpointConfiguration;
-            });
-            // builder.UseNServiceBus(context =>
-            // {
-            //     var endpointConfiguration = new EndpointConfiguration("BookFlight");
-            //     return endpointConfiguration;
-            // });
-            // QueueCreationUtils.CreateQueuesForEndpoint(
-            //     uri: "amqp://guest:guest@localhost:5672",
-            //     endpointName: "BookFlight",
-            //     durableMessages: true,
-            //     createExchanges: true);
-            return builder;
-        }
+            var routing = transport.Routing();
+            routing.RouteToEndpoint(typeof(FlightBooked), "TripService");
+            return endpointConfiguration;
+        });
+        return builder;
     }
 }
