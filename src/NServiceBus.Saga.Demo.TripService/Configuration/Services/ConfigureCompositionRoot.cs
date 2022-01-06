@@ -10,7 +10,6 @@ public static class ConfigureCompositionRoot
     /// <returns></returns>
     public static IServiceCollection AddCompositionRoot(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
         services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
         services.AddOptions();
         return services;
