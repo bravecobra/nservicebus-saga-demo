@@ -15,10 +15,10 @@ COPY ./src/NServiceBus.Saga.Demo.TripService/ ./NServiceBus.Saga.Demo.TripServic
 COPY ./src/NServiceBus.Saga.Demo.Contracts/ ./NServiceBus.Saga.Demo.Contracts/
 COPY ./src/NServiceBus.Common/ ./NServiceBus.Common/
 WORKDIR "/src/NServiceBus.Saga.Demo.TripService"
-RUN dotnet build "NServiceBus.Saga.Demo.TripService.csproj" -c Release -o /app/build
+RUN dotnet build "NServiceBus.Saga.Demo.TripService.csproj" -c Debug -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "NServiceBus.Saga.Demo.TripService.csproj" -c Release -o /app/publish
+RUN dotnet publish "NServiceBus.Saga.Demo.TripService.csproj" -c Debug -o /app/publish
 
 FROM base AS final
 WORKDIR /app

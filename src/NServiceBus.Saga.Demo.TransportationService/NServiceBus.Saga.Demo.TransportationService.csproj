@@ -24,7 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NServiceBus.Common\NServiceBus.Common.csproj" />
     <ProjectReference Include="..\NServiceBus.Saga.Demo.Contracts\NServiceBus.Saga.Demo.Contracts.csproj" />
   </ItemGroup>
 

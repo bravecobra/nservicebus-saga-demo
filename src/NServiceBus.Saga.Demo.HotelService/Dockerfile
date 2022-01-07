@@ -9,16 +9,14 @@ FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["src/NServiceBus.Saga.Demo.HotelService/NServiceBus.Saga.Demo.HotelService.csproj", "NServiceBus.Saga.Demo.HotelService/"]
 COPY ["src/NServiceBus.Saga.Demo.Contracts/NServiceBus.Saga.Demo.Contracts.csproj", "NServiceBus.Saga.Demo.Contracts/"]
-COPY ["src/NServiceBus.Common/NServiceBus.Common.csproj", "NServiceBus.Common/"]
 RUN dotnet restore "NServiceBus.Saga.Demo.HotelService/NServiceBus.Saga.Demo.HotelService.csproj"
 COPY ./src/NServiceBus.Saga.Demo.HotelService/ ./NServiceBus.Saga.Demo.HotelService/
 COPY ./src/NServiceBus.Saga.Demo.Contracts/ ./NServiceBus.Saga.Demo.Contracts/
-COPY ./src/NServiceBus.Common/ ./NServiceBus.Common/
 WORKDIR "/src/NServiceBus.Saga.Demo.HotelService"
-RUN dotnet build "NServiceBus.Saga.Demo.HotelService.csproj" -c Release -o /app/build
+RUN dotnet build "NServiceBus.Saga.Demo.HotelService.csproj" -c Debug -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "NServiceBus.Saga.Demo.HotelService.csproj" -c Release -o /app/publish
+RUN dotnet publish "NServiceBus.Saga.Demo.HotelService.csproj" -c Debug -o /app/publish
 
 FROM base AS final
 WORKDIR /app

@@ -9,11 +9,6 @@ namespace NServiceBus.Saga.Demo.TripService.Configuration.Services
         public static void AddCustomPersistence(this IServiceCollection services, IConfiguration configuration)
         {
             var connectionstring = configuration.GetConnectionString("trip-database");
-            if (Common.Container.IsRunningInContainer)
-            {
-                connectionstring = connectionstring.Replace("localhost", "mssql");
-            }
-
             services.AddDbContext<TripDbContext>(builder =>
                 builder.UseSqlServer(connectionstring));
 
