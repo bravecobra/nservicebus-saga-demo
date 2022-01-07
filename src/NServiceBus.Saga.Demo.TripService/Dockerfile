@@ -9,11 +9,9 @@ FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["src/NServiceBus.Saga.Demo.TripService/NServiceBus.Saga.Demo.TripService.csproj", "NServiceBus.Saga.Demo.TripService/"]
 COPY ["src/NServiceBus.Saga.Demo.Contracts/NServiceBus.Saga.Demo.Contracts.csproj", "NServiceBus.Saga.Demo.Contracts/"]
-COPY ["src/NServiceBus.Common/NServiceBus.Common.csproj", "NServiceBus.Common/"]
 RUN dotnet restore "NServiceBus.Saga.Demo.TripService/NServiceBus.Saga.Demo.TripService.csproj"
 COPY ./src/NServiceBus.Saga.Demo.TripService/ ./NServiceBus.Saga.Demo.TripService/
 COPY ./src/NServiceBus.Saga.Demo.Contracts/ ./NServiceBus.Saga.Demo.Contracts/
-COPY ./src/NServiceBus.Common/ ./NServiceBus.Common/
 WORKDIR "/src/NServiceBus.Saga.Demo.TripService"
 RUN dotnet build "NServiceBus.Saga.Demo.TripService.csproj" -c Debug -o /app/build
 
