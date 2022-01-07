@@ -32,8 +32,6 @@ public class Startup
         services.AddCompositionRoot(Configuration);
         services.AddRouting();
 
-        //services.AddCustomPersistence(Configuration);
-
         services.AddControllers()
             .ConfigureApiBehaviorOptions(options =>
             {

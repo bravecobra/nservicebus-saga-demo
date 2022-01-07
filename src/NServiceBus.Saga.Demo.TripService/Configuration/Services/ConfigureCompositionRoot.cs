@@ -12,6 +12,7 @@ public static class ConfigureCompositionRoot
     {
         services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
         services.AddOptions();
+        services.AddCustomPersistence(configuration);
         return services;
     }
 }

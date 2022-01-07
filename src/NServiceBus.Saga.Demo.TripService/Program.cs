@@ -22,6 +22,10 @@ public class Program
     /// <returns></returns>
     public static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
+            .ConfigureServices((context,collection) =>
+            {
+                collection.AddCustomPersistence(context.Configuration);
+            })
             .UseCustomEventBus()
             .ConfigureWebHostDefaults(webBuilder =>
             {

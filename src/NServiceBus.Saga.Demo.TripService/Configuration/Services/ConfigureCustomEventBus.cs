@@ -1,7 +1,10 @@
-﻿using NServiceBus.Common;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using NServiceBus.Persistence.Sql;
 using NServiceBus.Saga.Demo.Contracts.Flights;
 using NServiceBus.Saga.Demo.Contracts.Hotels;
 using NServiceBus.Saga.Demo.Contracts.Trips;
+using NServiceBus.Saga.Demo.TripService.Persistence;
 
 namespace NServiceBus.Saga.Demo.TripService.Configuration.Services;
 
@@ -21,7 +24,6 @@ public static class ConfigureEventBusExtensions
             var transport = endpointConfiguration.UseTransport<RabbitMQTransport>()
                 .ConnectionString(context.Configuration.GetConnectionString("RabbitMq"))
                 .UseConventionalRoutingTopology();
-            endpointConfiguration.UsePersistence<InMemoryPersistence>();
             endpointConfiguration.EnableInstallers();
             endpointConfiguration.EnableCallbacks();
             endpointConfiguration.EnableOutbox();
@@ -45,6 +47,32 @@ public static class ConfigureEventBusExtensions
             );
             endpointConfiguration.ConnectToServicePlatform(context.Configuration.GetSection("NServiceBus").Get<ServicePlatformConnectionConfiguration>());
 
+            //SagaData Persistence
+            //endpointConfiguration.UsePersistence<InMemoryPersistence>();
+            var persistence = endpointConfiguration.UsePersistence<SqlPersistence>();
+            persistence.SqlDialect<SqlDialect.MsSqlServer>();
+
+            persistence.ConnectionBuilder(() => new SqlConnection(context.Configuration.GetConnectionString("trip-database")));
+            endpointConfiguration.RegisterComponents(c =>
+            {
+                 c.ConfigureComponent(b =>
+                 {
+                     var session = b.Build<ISqlStorageSession>();
+                     var dbContext = new TripDbContext(new DbContextOptionsBuilder<TripDbContext>()
+                         .UseSqlServer(session.Connection)
+                         .Options);
+                     //
+                     //Use the same underlying ADO.NET transaction
+                     dbContext.Database.UseTransaction(session.Transaction);
+            
+                     //Ensure context is flushed before the transaction is committed
+                     session.OnSaveChanges(s => dbContext.SaveChangesAsync());
+            
+                     return dbContext;
+                 }, DependencyLifecycle.InstancePerUnitOfWork);
+            });
+            var subscriptions = persistence.SubscriptionSettings();
+            subscriptions.CacheFor(TimeSpan.FromMinutes(1));
 
             return endpointConfiguration;
         });

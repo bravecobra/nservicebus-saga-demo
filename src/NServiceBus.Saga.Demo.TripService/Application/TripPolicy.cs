@@ -1,13 +1,15 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using NServiceBus.Saga.Demo.Contracts.Flights;
 using NServiceBus.Saga.Demo.Contracts.Hotels;
 using NServiceBus.Saga.Demo.Contracts.Trips;
 using NServiceBus.Saga.Demo.TripService.Domain;
+using NServiceBus.Saga.Demo.TripService.Persistence;
 using NServiceBus.Sagas;
 
 namespace NServiceBus.Saga.Demo.TripService.Application;
 
-public class TripPolicy: Saga<Trip>,
+public class TripPolicy: Saga<TripPolicy.TripSagaData>,
         IAmStartedByMessages<TripRegistrationRequest>,
         IHandleMessages<FlightBooked>,
         IHandleMessages<HotelBooked>,
@@ -16,19 +18,21 @@ public class TripPolicy: Saga<Trip>,
         IHandleSagaNotFound
 {
     private readonly ILogger<TripPolicy> _logger;
+    private readonly TripDbContext _dbContext;
 
-    public TripPolicy(ILogger<TripPolicy> logger)
+    public TripPolicy(ILogger<TripPolicy> logger, TripDbContext dbContext)
     {
         _logger = logger;
+        _dbContext = dbContext;
     }
-    // public class TripData: ContainSagaData
-    // {
-    //     public Guid TripId { get; set; }
-    // }
-
-    protected override void ConfigureHowToFindSaga(SagaPropertyMapper<Trip> mapper)
+    public class TripSagaData : ContainSagaData
     {
-        mapper.MapSaga(data => data.CorrelationId)
+        public Guid TripId { get; set; }
+    }
+
+    protected override void ConfigureHowToFindSaga(SagaPropertyMapper<TripSagaData> mapper)
+    {
+        mapper.MapSaga(data => data.TripId)
             .ToMessage<TripRegistrationRequest>(request => request.TripId)
             .ToMessage<FlightBooked>(booked => booked.TripId)
             .ToMessage<HotelBooked>(booked => booked.TripId)
@@ -38,80 +42,99 @@ public class TripPolicy: Saga<Trip>,
 
     public async Task Handle(TripRegistrationRequest message, IMessageHandlerContext context)
     {
-        Data.Initialize(message);
+        var trip = new Trip
+        {
+            CorrelationId = Data.TripId
+        };
+        trip.Initialize(message);
         _logger.LogInformation($"TripID: {message.TripId}");
-        _logger.LogInformation($"Trip {Data.CorrelationId}: Incoming TripRequest to {Data.Destination}");
+        _logger.LogInformation($"Trip {trip.CorrelationId}: Incoming TripRequest to {trip.Destination}");
         await context.Send(new BookFlightRequest
         {
-            TripId = Data.CorrelationId,
-            DayOfFlight = Data.Start,
+            TripId = trip.CorrelationId,
+            DayOfFlight = trip.Start,
             IsOutbound = true,
             From = "home",
-            To = Data.Destination
+            To = trip.Destination
         });
         
         await context.Send(new BookFlightRequest
         {
-            TripId = Data.CorrelationId,
-            DayOfFlight = Data.End,
+            TripId = trip.CorrelationId,
+            DayOfFlight = trip.End,
             IsOutbound = false,
-            From = Data.Destination,
+            From = trip.Destination,
             To = "home"
         });
-        Data.CurrentState = "PendingFlightBookingConfirmations";
-        _logger.LogInformation($"Trip {Data.CorrelationId}: Flights are requested");
+        trip.CurrentState = "PendingFlightBookingConfirmations";
+        _logger.LogInformation($"Trip {trip.CorrelationId}: Flights are requested");
+        await _dbContext.TripStates.AddAsync(trip);
+        await _dbContext.SaveChangesAsync();
     }
 
     public async Task Handle(FlightBooked message, IMessageHandlerContext context)
     {
-        if (Data.CurrentState == "Cancelled")
+        var trip = _dbContext.TripStates
+            .Include(t => t.BookedFlights)
+            .Include(t=> t.HotelBooking)
+            .Single(trip => trip.CorrelationId == Data.TripId);
+        if (trip.CurrentState == "Cancelled")
         {
-            _logger.LogWarning($"TripId {Data.CorrelationId}: trip was already cancelled. Ignoring flight booking");
+            _logger.LogWarning($"TripId {trip.CorrelationId}: trip was already cancelled. Ignoring flight booking");
         }
 
-        Data.Handle(message);
-        _logger.LogInformation($"Trip {Data.CorrelationId}: {(message.IsOutbound ? "Outbound" : "Inbound") } flight got booked @ {message.Company}");
-        if (Data.AllFlightsBooked)
+        trip.Handle(message);
+        _logger.LogInformation($"Trip {trip.CorrelationId}: {(message.IsOutbound ? "Outbound" : "Inbound") } flight got booked @ {message.Company}");
+        if (trip.AllFlightsBooked)
         {
             await context.Send(new BookHotelRequest
             {
-                TripId = Data.CorrelationId,
-                RequiredStars = Data.RequiredStars,
-                Location = Data.Destination
+                TripId = trip.CorrelationId,
+                RequiredStars = trip.RequiredStars,
+                Location = trip.Destination
 
             });
-            Data.CurrentState = "PendingHotelBookingConfirmation";
-            _logger.LogInformation($"Trip {Data.CorrelationId}: Hotel booking in {Data.Destination} requested");
+            trip.CurrentState = "PendingHotelBookingConfirmation";
+            _logger.LogInformation($"Trip {trip.CorrelationId}: Hotel booking in {trip.Destination} requested");
         }
-        _logger.LogInformation($"Trip {Data.CorrelationId}: CurrentState = {Data.CurrentState}");
-            
+        _logger.LogInformation($"Trip {trip.CorrelationId}: CurrentState = {trip.CurrentState}");
+        await _dbContext.SaveChangesAsync();
     }
 
-    public Task Handle(HotelBooked message, IMessageHandlerContext context)
+    public async Task Handle(HotelBooked message, IMessageHandlerContext context)
     {
-        if (Data.CurrentState == "Cancelled")
+        var trip = _dbContext.TripStates
+            .Include(t => t.BookedFlights)
+            .Include(t => t.HotelBooking)
+            .Single(trip => trip.CorrelationId == Data.TripId);
+        if (trip.CurrentState == "Cancelled")
         {
-            _logger.LogWarning($"TripId {Data.CorrelationId}: trip was already cancelled. Ignoring flight booking");
+            _logger.LogWarning($"TripId {trip.CorrelationId}: trip was already cancelled. Ignoring flight booking");
         }
-        Data.Handle(message);
-        Data.CurrentState = "Completed";
-        _logger.LogInformation($"Trip {Data.CorrelationId}: Hotel booked in {Data.Destination}");
-        _logger.LogInformation($"Trip {Data.CorrelationId}: CurrentState = {Data.CurrentState}");
-        return Task.CompletedTask;
+        trip.Handle(message);
+        trip.CurrentState = "Completed";
+        _logger.LogInformation($"Trip {trip.CorrelationId}: Hotel booked in {trip.Destination}");
+        _logger.LogInformation($"Trip {trip.CorrelationId}: CurrentState = {trip.CurrentState}");
+        await _dbContext.SaveChangesAsync();
     }
 
     public async Task Handle(TripStateRequest message, IMessageHandlerContext context)
     {
-        _logger.LogInformation($"TripId: {Data.CorrelationId} Replying to TripStateRequest");
+        var trip = _dbContext.TripStates
+            .Include(t => t.BookedFlights)
+            .Include(t => t.HotelBooking)
+            .Single(trip => trip.CorrelationId == Data.TripId);
+        _logger.LogInformation($"TripId: {trip.CorrelationId} Replying to TripStateRequest");
         await context.Reply(new TripState
         {
-            TripId = Data.CorrelationId,
-            HotelBooked = Data.HotelBooked,
-            OutboundFlightBooked = Data.OutboundFlightBooked,
-            ReturnFlightBooked = Data.ReturnFlightBooked,
-            State = Data.CurrentState,
+            TripId = trip.CorrelationId,
+            HotelBooked = trip.HotelBooked,
+            OutboundFlightBooked = trip.OutboundFlightBooked,
+            ReturnFlightBooked = trip.ReturnFlightBooked,
+            State = trip.CurrentState,
             Timestamp = DateTime.UtcNow
         });
+        await _dbContext.SaveChangesAsync();
     }
 
     public async Task Handle(object message, IMessageProcessingContext context)
@@ -127,10 +150,14 @@ public class TripPolicy: Saga<Trip>,
         }
     }
 
-    public Task Handle(TripCancellationRequest message, IMessageHandlerContext context)
+    public async Task Handle(TripCancellationRequest message, IMessageHandlerContext context)
     {
+        var trip = _dbContext.TripStates
+            .Include(t => t.BookedFlights)
+            .Include(t => t.HotelBooking)
+            .Single(trip => trip.CorrelationId == Data.TripId);
         _logger.LogWarning("TODO: handle a TripCancellationRequest");
-        Data.CurrentState = "Cancelled";
-        return Task.CompletedTask;
+        trip.CurrentState = "Cancelled";
+        await _dbContext.SaveChangesAsync();
     }
 }
