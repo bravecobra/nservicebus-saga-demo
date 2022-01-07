@@ -21,6 +21,6 @@ public class FlightBookingConsumer : IHandleMessages<BookFlightRequest>
             Cost = Convert.ToDecimal(Random.Shared.NextDouble() * 90 + 10),
             Company = Random.Shared.NextDouble() > .5d ? "Ryanair" : "EasyJet"
         });
-        _logger.LogInformation($"Booked flight for {message.TripId}");
+        _logger.LogInformation("Booked flight for {TripId}", message.TripId);
     }
 }

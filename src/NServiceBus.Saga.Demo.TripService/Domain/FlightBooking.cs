@@ -2,30 +2,11 @@
 
 public class FlightBooking
 {
-    /// <summary>
-    /// 
-    /// </summary>
     public Guid FlightId { get; private set; }
-    /// <summary>
-    /// 
-    /// </summary>
     public bool IsOutboundFlight { get; private set; }
-    /// <summary>
-    /// 
-    /// </summary>
     public bool IsReturnFlight => !IsOutboundFlight;
-    /// <summary>
-    /// 
-    /// </summary>
     public decimal FlightCost { get; private set; }
-    /// <summary>
-    /// 
-    /// </summary>
     public string AirlineCompany { get; private set; } = null!;
-
-    /// <summary>
-    /// 
-    /// </summary>
     private FlightBooking()
     {
         // Required by EFCore

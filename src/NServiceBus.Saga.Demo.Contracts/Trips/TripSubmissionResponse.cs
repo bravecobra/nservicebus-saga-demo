@@ -2,6 +2,6 @@
 
 public class TripSubmissionResponse: IMessage
 {
-    public bool Succeeded { get; set; }
+    public bool Succeeded { get; init; }
     public string? Reason { get; init; }
 }

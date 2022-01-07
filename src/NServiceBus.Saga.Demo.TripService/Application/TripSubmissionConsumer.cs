@@ -21,7 +21,7 @@ public class TripSubmissionConsumer: IHandleMessages<SubmitTrip>
                 Succeeded = false,
                 Reason = validationResult.Error
             } );
-            _logger.LogError($"TripRequest for {message.Destination} invalid: {validationResult.Error}");
+            _logger.LogError("TripRequest for {Destination} invalid: {Error}", message.Destination, validationResult.Error);
             return;
         }
 
@@ -34,7 +34,7 @@ public class TripSubmissionConsumer: IHandleMessages<SubmitTrip>
             Start = message.Start,
             End = message.End
         });
-        _logger.LogInformation($"TripId: {message.TripId}: TripRequest for {message.Destination} accepted");
+        _logger.LogInformation("TripId: {TripId}: TripRequest for {Destination} accepted", message.TripId, message.Destination);
         await context.Reply(new TripSubmissionResponse {Succeeded = true});
     }
 }

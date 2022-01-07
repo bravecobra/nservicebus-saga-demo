@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>abb2c32a-dafd-4476-8990-4cda11d4d99c</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	<PreserveCompilationContext>false</PreserveCompilationContext>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,10 +30,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\NServiceBus.Saga.Demo.Contracts\NServiceBus.Saga.Demo.Contracts.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\..\.editorconfig" Link=".editorconfig" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,10 @@
 ﻿[*.cs]
 
 # CS0435: Namespace conflicts with imported type
-dotnet_diagnostic.CS0435.severity = none
+dotnet_diagnostic.CS0435.severity = silent
+
+# CS8618: Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+dotnet_diagnostic.CS8618.severity = silent
+
+# CS1591: Missing XML comment for publicly visible type or member 'Type_or_Member'
+dotnet_diagnostic.CS1591.severity = silent

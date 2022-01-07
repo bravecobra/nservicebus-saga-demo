@@ -15,7 +15,6 @@ public static class ConfigureEventBusExtensions
                 .UseConventionalRoutingTopology();
             endpointConfiguration.UsePersistence<InMemoryPersistence>();
             endpointConfiguration.EnableInstallers();
-            endpointConfiguration.EnableCallbacks();
             endpointConfiguration.EnableOutbox();
             endpointConfiguration.MakeInstanceUniquelyAddressable(Environment.MachineName);
             endpointConfiguration.UseSerialization<NewtonsoftSerializer>();

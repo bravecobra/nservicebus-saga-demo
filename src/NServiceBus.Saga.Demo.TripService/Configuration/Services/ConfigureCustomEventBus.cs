@@ -10,11 +10,6 @@ namespace NServiceBus.Saga.Demo.TripService.Configuration.Services;
 
 public static class ConfigureEventBusExtensions
 {
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="builder"></param>
-    /// <returns></returns>
     public static IHostBuilder UseCustomEventBus(this IHostBuilder builder)
     {
         builder.UseNServiceBus(context =>

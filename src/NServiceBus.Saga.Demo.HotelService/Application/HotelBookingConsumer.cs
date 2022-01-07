@@ -21,6 +21,6 @@ public class HotelBookingConsumer : IHandleMessages<BookHotelRequest>
             HotelName = "Hilton",
             HotelBookingId = Guid.NewGuid()
         });
-        _logger.LogInformation($"TripId: {message.TripId} Booking {message.RequiredStars} star hotel in {message.Location}");
+        _logger.LogInformation("TripId: {TripId} Booking {RequiredStars} star hotel in {Location}", message.TripId, message.RequiredStars, message.Location);
     }
 }
