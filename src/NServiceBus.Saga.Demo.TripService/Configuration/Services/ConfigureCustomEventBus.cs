@@ -19,7 +19,7 @@ public static class ConfigureEventBusExtensions
             var endpointConfiguration = new EndpointConfiguration("TripService");
                 
             var transport = endpointConfiguration.UseTransport<RabbitMQTransport>()
-                .ConnectionString("amqp://localhost")
+                .ConnectionString(context.Configuration.GetConnectionString("RabbitMq"))
                 .UseConventionalRoutingTopology();
             endpointConfiguration.UsePersistence<InMemoryPersistence>();
             endpointConfiguration.EnableInstallers();
@@ -28,67 +28,26 @@ public static class ConfigureEventBusExtensions
             endpointConfiguration.MakeInstanceUniquelyAddressable(Environment.MachineName);
             endpointConfiguration.UseSerialization<NewtonsoftSerializer>();
             endpointConfiguration.SendFailedMessagesTo(errorQueue: "error");
+
+            //Routing
+            var routing = transport.Routing();
+            routing.RouteToEndpoint(typeof(SubmitTrip).Assembly, "NServiceBus.Saga.Demo.Contracts.Trips", "TripService");
+            routing.RouteToEndpoint(typeof(BookFlightRequest).Assembly, "NServiceBus.Saga.Demo.Contracts.Flights", "TransportationService");
+            routing.RouteToEndpoint(typeof(BookHotelRequest).Assembly, "NServiceBus.Saga.Demo.Contracts.Hotels", "HotelService");
+
+            //Monitoring and auditing
             endpointConfiguration.AuditProcessedMessagesTo("audit");
+            endpointConfiguration.AuditSagaStateChanges(serviceControlQueue: "audit");
 
-            var metrics = endpointConfiguration.EnableMetrics();
-
-            metrics.SendMetricDataToServiceControl(
+            endpointConfiguration.EnableMetrics().SendMetricDataToServiceControl(
                 serviceControlMetricsAddress: "Particular.Monitoring",
                 interval: TimeSpan.FromSeconds(2)
             );
-            var servicePlatformConnection = ServicePlatformConnectionConfiguration.Parse(@"{
-                ""Heartbeats"": {
-                    ""Enabled"": true,
-                    ""HeartbeatsQueue"": ""Particular.Myservicecontrol"",
-                    ""Frequency"": ""00:00:10"",
-                    ""TimeToLive"": ""00:00:40""
-                },
-                ""MessageAudit"": {
-                    ""Enabled"": true,
-                    ""AuditQueue"": ""audit""
-                },
-                ""CustomChecks"": {
-                    ""Enabled"": true,
-                    ""CustomChecksQueue"": ""Particular.Myservicecontrol""
-                },
-                ""ErrorQueue"": ""error"",
-                ""SagaAudit"": {
-                    ""Enabled"": true,
-                    ""SagaAuditQueue"": ""audit""
-                },
-                ""Metrics"": {
-                    ""Enabled"": true,
-                    ""MetricsQueue"": ""Particular.Monitoring"",
-                    ""Interval"": ""00:00:01""
-                }
-            }");
+            endpointConfiguration.ConnectToServicePlatform(context.Configuration.GetSection("NServiceBus").Get<ServicePlatformConnectionConfiguration>());
 
-            endpointConfiguration.ConnectToServicePlatform(servicePlatformConnection);
-
-            var routing = transport.Routing();
-            routing.RouteToEndpoint(typeof(SubmitTrip), "TripService");
-            routing.RouteToEndpoint(typeof(TripSubmissionResponse), "TripService");
-            routing.RouteToEndpoint(typeof(TripRegistrationRequest), "TripService");
-            routing.RouteToEndpoint(typeof(BookFlightRequest), "BookFlight");
-            routing.RouteToEndpoint(typeof(BookHotelRequest), "BookHotel");
-            routing.RouteToEndpoint(typeof(TripStateRequest), "TripService");
-            routing.RouteToEndpoint(typeof(TripState), "TripService");
-            routing.RouteToEndpoint(typeof(TripNotFound), "TripService");
-            routing.RouteToEndpoint(typeof(TripCancellationRequest), "TripService");
 
             return endpointConfiguration;
         });
-        // QueueCreationUtils.CreateQueuesForEndpoint(
-        //     uri: "amqp://guest:guest@localhost:5672",
-        //     endpointName: "BookFlight",
-        //     durableMessages: true,
-        //     createExchanges: true);
-        //
-        // QueueCreationUtils.CreateQueuesForEndpoint(
-        //     uri: "amqp://guest:guest@localhost:5672",
-        //     endpointName: "BookHotel",
-        //     durableMessages: true,
-        //     createExchanges: true);
         return builder;
     }
 }

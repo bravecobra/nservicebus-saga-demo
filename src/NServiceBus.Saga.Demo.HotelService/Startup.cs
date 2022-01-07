@@ -38,16 +38,7 @@ public class Startup
             .ConfigureApiBehaviorOptions(options =>
             {
                 options.SuppressModelStateInvalidFilter = true;
-            })
-            .AddNewtonsoftJson(options =>
-            {
-                options.SerializerSettings.Formatting = Formatting.Indented;
-                options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-                options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
-                options.SerializerSettings.DateTimeZoneHandling = DateTimeZoneHandling.Local;
-                options.SerializerSettings.Converters = new List<JsonConverter> { new StringEnumConverter() };
-            })
-            ;
+            });
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

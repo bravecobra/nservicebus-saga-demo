@@ -8,10 +8,10 @@ public static class ConfigureEventBusExtensions
     {
         builder.UseNServiceBus(context =>
         {
-            var endpointConfiguration = new EndpointConfiguration("BookFlight");
+            var endpointConfiguration = new EndpointConfiguration("TransportationService");
 
             var transport = endpointConfiguration.UseTransport<RabbitMQTransport>()
-                .ConnectionString("amqp://localhost")
+                .ConnectionString(context.Configuration.GetConnectionString("RabbitMq"))
                 .UseConventionalRoutingTopology();
             endpointConfiguration.UsePersistence<InMemoryPersistence>();
             endpointConfiguration.EnableInstallers();
@@ -21,42 +21,13 @@ public static class ConfigureEventBusExtensions
             endpointConfiguration.UseSerialization<NewtonsoftSerializer>();
             endpointConfiguration.SendFailedMessagesTo(errorQueue: "error");
             endpointConfiguration.AuditProcessedMessagesTo("audit");
+            endpointConfiguration.AuditSagaStateChanges(serviceControlQueue: "audit");
 
-            var metrics = endpointConfiguration.EnableMetrics();
-
-            metrics.SendMetricDataToServiceControl(
+            endpointConfiguration.EnableMetrics().SendMetricDataToServiceControl(
                 serviceControlMetricsAddress: "Particular.Monitoring",
                 interval: TimeSpan.FromSeconds(2)
             );
-
-            var servicePlatformConnection = ServicePlatformConnectionConfiguration.Parse(@"{
-                ""Heartbeats"": {
-                    ""Enabled"": true,
-                    ""HeartbeatsQueue"": ""Particular.Myservicecontrol"",
-                    ""Frequency"": ""00:00:10"",
-                    ""TimeToLive"": ""00:00:40""
-                },
-                ""MessageAudit"": {
-                    ""Enabled"": true,
-                    ""AuditQueue"": ""audit""
-                },
-                ""CustomChecks"": {
-                    ""Enabled"": true,
-                    ""CustomChecksQueue"": ""Particular.Myservicecontrol""
-                },
-                ""ErrorQueue"": ""error"",
-                ""SagaAudit"": {
-                    ""Enabled"": true,
-                    ""SagaAuditQueue"": ""audit""
-                },
-                ""Metrics"": {
-                    ""Enabled"": true,
-                    ""MetricsQueue"": ""Particular.Monitoring"",
-                    ""Interval"": ""00:00:01""
-                }
-            }");
-
-            endpointConfiguration.ConnectToServicePlatform(servicePlatformConnection);
+            endpointConfiguration.ConnectToServicePlatform(context.Configuration.GetSection("NServiceBus").Get<ServicePlatformConnectionConfiguration>());
 
             var routing = transport.Routing();
             routing.RouteToEndpoint(typeof(FlightBooked), "TripService");
