@@ -17,7 +17,7 @@
     <PackageReference Include="NServiceBus.Extensions.Logging" Version="1.0.0" />
     <PackageReference Include="NServiceBus.Metrics.ServiceControl" Version="3.0.6" />
     <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="2.3.0" />
-    <PackageReference Include="NServiceBus.RabbitMQ" Version="6.1.1" />
+    <PackageReference Include="NServiceBus.RabbitMQ" Version="6.1.6" />
     <PackageReference Include="NServiceBus.SagaAudit" Version="3.0.1" />
     <PackageReference Include="NServiceBus.ServicePlatform.Connector" Version="1.0.0" />
   </ItemGroup>
